@@ -32,6 +32,9 @@ printer_friendly = st.sidebar.checkbox("Printer Friendly View")
 indicator = categories[category_choice]
 df = wb.data.DataFrame(indicator, latin_countries.values(), mrv=70)  # most recent 70 years
 df = df.T.reset_index().rename(columns={"index": "year"})
+
+# Clean 'year' column
+df = df[pd.to_numeric(df["year"], errors='coerce').notnull()]
 df["year"] = df["year"].astype(int)
 
 # Keep only selected countries
@@ -70,13 +73,13 @@ else:
         if extrapolate_years > 0:
             plt.plot(future_years, future_pred, "--", label=f"{country} Extrapolation")
 
-        # Equation
+        # Regression equation
         coeffs = model.coef_
         intercept = model.intercept_
         st.markdown(f"**{country} Regression Equation:** y = {intercept:.2f} + " +
                     " + ".join([f"{coeff:.2e}·x^{i}" for i, coeff in enumerate(coeffs[1:], start=1)]))
 
-        # Add to report
+        # Add to printer-friendly report
         report += f"\n{country} — {category_choice}\n"
         report += f"Years: {edited_df.index.min()}–{edited_df.index.max()}\n"
         report += f"Last observed: {edited_df[country].iloc[-1]} in {edited_df.index.max()}\n"
@@ -90,6 +93,7 @@ else:
     st.subheader("Graph of data and polynomial regression model")
     st.pyplot(plt)
 
+    # Printer Friendly View
     if printer_friendly:
         st.subheader("Printer Friendly Report")
         st.text(report)
